@@ -21,10 +21,6 @@ public class WRJ12620_Command implements Command {
         return 8090;
     }
 
-    public String getName() {
-        return "wrj12620";
-    }
-
     public byte[] getPacket() {
         return packet;
     }

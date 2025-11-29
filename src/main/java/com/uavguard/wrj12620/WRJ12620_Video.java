@@ -3,8 +3,6 @@ package com.uavguard.wrj12620;
 import com.uavguard.sdk.Video;
 import java.io.ByteArrayOutputStream;
 import java.net.*;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
@@ -21,41 +19,48 @@ public class WRJ12620_Video implements Video {
     }
 
     @Override
-    public void getSetup(DatagramSocket socket) throws Exception {
+    public void setup(DatagramSocket socket, InetAddress ip) throws Exception {
         byte[] resumeBytes = "Bv".getBytes(StandardCharsets.UTF_8);
 
         DatagramPacket resume = new DatagramPacket(
             resumeBytes,
-            resumeBytes.length
+            resumeBytes.length,
+            ip,
+            port
         );
 
         socket.send(resume);
     }
 
     @Override
-    public void getLoop(DatagramSocket socket, byte[] data) throws Exception {
-        for (int i = 0; i < data.length - 1; i++) {
-            if (data[i] == (byte) 0xFF && data[i + 1] == (byte) 0xD8) {
-                buffer.reset();
-                buffer.write(0xFF);
-                buffer.write(0xD8);
-                writing = true;
-                i++;
-                continue;
-            }
+    public void loop(DatagramSocket socket, InetAddress ip, byte[] data)
+        throws Exception {
+        for (int i = 0; i < data.length; i++) {
+            if (data[i] == (byte) 0xFF && i + 1 < data.length) {
+                byte next = data[i + 1];
 
-            if (
-                writing && data[i] == (byte) 0xFF && data[i + 1] == (byte) 0xD9
-            ) {
-                buffer.write(0xFF);
-                buffer.write(0xD9);
+                if (next == (byte) 0xD8) {
+                    writing = true;
+                    buffer.reset();
+                    buffer.write((byte) 0xFF);
+                    buffer.write((byte) 0xD8);
+                    i++;
+                    continue;
+                }
 
-                if (callback != null) callback.accept(buffer.toByteArray());
+                if (writing && next == (byte) 0xD9) {
+                    buffer.write((byte) 0xFF);
+                    buffer.write((byte) 0xD9);
+                    i++;
 
-                writing = false;
-                buffer.reset();
-                i++;
-                continue;
+                    if (callback != null) {
+                        callback.accept(buffer.toByteArray());
+                    }
+
+                    writing = false;
+                    buffer.reset();
+                    continue;
+                }
             }
 
             if (writing) {
