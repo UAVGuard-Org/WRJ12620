@@ -26,34 +26,7 @@ public class WRJ12620_Command implements Command {
     }
 
     public Action[] getActions() {
-        return new Action[] {
-            new Action(
-                "Decolar",
-                new byte[] {
-                    (byte) 0x66,
-                    (byte) 0x80,
-                    (byte) 0x80,
-                    (byte) 0x80,
-                    (byte) 0x80,
-                    (byte) 0x01,
-                    (byte) 0x01,
-                    (byte) 0x99,
-                }
-            ),
-            new Action(
-                "Pousar",
-                new byte[] {
-                    (byte) 0x66,
-                    (byte) 0x80,
-                    (byte) 0x80,
-                    (byte) 0x80,
-                    (byte) 0x80,
-                    (byte) 0x02,
-                    (byte) 0x02,
-                    (byte) 0x99,
-                }
-            ),
-        };
+        return new Action[] { new Takeoff(), new Land() };
     }
 
     public void setParameter(Movement action, int percent) {
